@@ -11,6 +11,7 @@
   <p><em>A comprehensive implementation of Model Context Protocol for Spanish language learning</em></p>
   <p>Created by Danny Thompson (DThompsonDev) at This Dot Labs</p>
 </div>
+<img width="1069" alt="image" src="https://github.com/user-attachments/assets/f1411864-ec5a-4ff5-8ec8-53bf71be6c38" />
 
 ---
 
