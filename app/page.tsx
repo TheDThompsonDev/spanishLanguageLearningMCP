@@ -1,102 +1,175 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "32px 16px",
+      }}
+    >
+      <header style={{ marginBottom: "32px" }}>
+        <h1
+          style={{
+            fontSize: "1.875rem",
+            fontWeight: "bold",
+            marginBottom: "8px",
+          }}
+        >
+          Spanish Learning MCP
+        </h1>
+        <p style={{ color: "#666" }}>
+          A Model Context Protocol for Spanish language learning applications
+        </p>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      <main>
+        <section style={{ marginBottom: "32px" }}>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              marginBottom: "16px",
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            About This Project
+          </h2>
+          <p style={{ marginBottom: "16px" }}>
+            Please follow the readme instructions in the repo because everything
+            is well documented.
+          </p>
+          <p style={{ marginBottom: "16px" }}>
+            This project is a demonstration of the Model Context Protocol (MCP)
+            for Spanish language learning applications. It provides a way to
+            integrate context from vocabulary and grammar data into AI models,
+            specifically Claude AI.
+          </p>
+          <p>
+            The MCP functionality is implemented in{" "}
+            <code
+              style={{
+                backgroundColor: "#f5f5f5",
+                padding: "2px 4px",
+                borderRadius: "3px",
+              }}
+            >
+              contexts/claude/claude-mcp.ts
+            </code>
+            . Check out the examples in{" "}
+            <code
+              style={{
+                backgroundColor: "#f5f5f5",
+                padding: "2px 4px",
+                borderRadius: "3px",
+              }}
+            >
+              contexts/claude/example.mjs
+            </code>{" "}
+            and{" "}
+            <code
+              style={{
+                backgroundColor: "#f5f5f5",
+                padding: "2px 4px",
+                borderRadius: "3px",
+              }}
+            >
+              contexts/claude/simple-demo.mjs
+            </code>{" "}
+            to see how to use it.
+          </p>
+        </section>
+
+        <section style={{ marginBottom: "32px" }}>
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              marginBottom: "16px",
+            }}
           >
-            Read our docs
-          </a>
-        </div>
+            Getting Started
+          </h2>
+          <ol
+            style={{
+              listStyleType: "decimal",
+              paddingLeft: "24px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            <li>Clone this repository</li>
+            <li>
+              Install dependencies:{" "}
+              <code
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  padding: "2px 4px",
+                  borderRadius: "3px",
+                }}
+              >
+                npm install
+              </code>
+            </li>
+            <li>
+              Create a{" "}
+              <code
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  padding: "2px 4px",
+                  borderRadius: "3px",
+                }}
+              >
+                .env.local
+              </code>{" "}
+              file with your API keys:
+              <pre
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  padding: "8px",
+                  marginTop: "8px",
+                  borderRadius: "4px",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                ANTHROPIC_API_KEY=your_anthropic_api_key <br />
+                NEXT_PUBLIC_APPWRITE_ENDPOINT=your_appwrite_endpoint <br />
+                NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_appwrite_project_id <br />
+                NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_appwrite_database_id{" "}
+                <br />
+                NEXT_PUBLIC_APPWRITE_VOCABULARY_COLLECTION_ID=your_vocabulary_collection_id{" "}
+                <br />
+                NEXT_PUBLIC_APPWRITE_GRAMMAR_COLLECTION_ID=your_grammar_collection_id{" "}
+                <br />
+              </pre>
+            </li>
+            <li>
+              Run the example:{" "}
+              <code
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  padding: "2px 4px",
+                  borderRadius: "3px",
+                }}
+              >
+                node contexts/claude/example.mjs
+              </code>
+            </li>
+          </ol>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer
+        style={{
+          marginTop: "48px",
+          paddingTop: "32px",
+          borderTop: "1px solid #eee",
+          textAlign: "center",
+          color: "#666",
+        }}
+      >
+        <p>
+          &copy; {new Date().getFullYear()} This Dot Labs. All rights reserved.
+        </p>
       </footer>
     </div>
   );
