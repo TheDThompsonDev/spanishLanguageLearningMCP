@@ -688,7 +688,7 @@ Let’s break down what MCP _actually does_:
 
 ## 🧠 What is Model Context Protocol?
 
-Model Context Protocol (MCP) is a design pattern for integrating Large Language Models (LLMs) with domain-specific data to enhance their capabilities. It provides a structured way to:
+Model Context Protocol (MCP) standardizes interactions between LLMs and external tools/data sources for integrating Large Language Models (LLMs) with domain-specific data to enhance their capabilities. It provides a structured way to:
 
 1. **Retrieve relevant context** from your application's data sources
 2. **Format this context** in a way that's optimal for LLM consumption
