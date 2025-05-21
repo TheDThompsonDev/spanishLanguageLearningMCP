@@ -1,5 +1,7 @@
 # dependencies
 /node_modules
+/examples/node_modules
+/examples/visual-demo/node_modules
 /.pnp
 .pnp.js
 

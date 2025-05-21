@@ -1,6 +1,630 @@
-
 # <div align="center">🌟 Spanish Learning MCP (Model Context Protocol)</div>
 
+# Spanish Learning MCP Server
+
+A server implementation of the Model Context Protocol (MCP) for Spanish language learning, providing tiered access to conversation practice, exercises, and language learning resources.
+
+## Overview
+
+This project has been transformed from a client-side implementation into a full-fledged server, allowing multiple clients to access Spanish learning functionality without directly handling API keys or complex context generation. The server provides a RESTful API with tiered access controls, memory management, and comprehensive error handling.
+
+## Quick Start
+
+Get the Spanish Learning MCP Server up and running in minutes with these quick start steps:
+
+### Prerequisites
+
+- Node.js 16+ and npm
+- Anthropic API key (for Claude AI)
+- Git
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/spanish-learning-mcp-server.git
+cd spanish-learning-mcp-server
+
+# Install dependencies
+npm install
+
+# Create .env file
+echo "ANTHROPIC_API_KEY=your_api_key_here" > .env
+```
+
+### Run the Server
+
+```bash
+# Start the server in development mode
+npm run dev
+
+# Or build and start in production mode
+npm run build
+npm start
+```
+
+The server will be available at http://localhost:3000 with the health check endpoint at http://localhost:3000/health.
+
+### Test Your Setup
+
+Make a simple request to verify your server is working:
+
+```bash
+curl http://localhost:3000/health
+# Should return {"status":"ok", "uptime": "..."}
+
+# Create an API key (requires admin access)
+curl -X POST http://localhost:3000/api/keys \
+  -H "Content-Type: application/json" \
+  -H "x-admin-key: your_admin_key" \
+  -d '{"userId": "test-user", "tier": "free"}'
+
+# Make a query with context
+curl -X POST http://localhost:3000/api/mcp/query \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your_api_key" \
+  -d '{"query": "How do I say hello in Spanish?", "contextType": "vocabulary"}'
+```
+
+### Running Tests
+
+The server includes comprehensive test coverage:
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm test -- --testPathPattern=auth
+npm test -- --testPathPattern=conversation
+
+# Run tests with coverage report
+npm test -- --coverage
+```
+
+### Docker Quick Start
+
+```bash
+# Build and run with Docker
+docker build -t spanish-learning-mcp-server .
+docker run -p 3000:3000 -e ANTHROPIC_API_KEY=your_api_key spanish-learning-mcp-server
+```
+
+### Platform Integrations
+
+**Deploy to Vercel:**
+
+```bash
+npm install -g vercel
+vercel
+```
+
+**Deploy to Heroku:**
+
+```bash
+npm install -g heroku
+heroku create
+git push heroku main
+```
+
+**Run with PM2 (production process manager):**
+
+```bash
+npm install -g pm2
+pm2 start npm --name "spanish-mcp" -- start
+```
+
+## Key Features
+
+### 1. Server Architecture
+
+The server follows a layered architecture with middleware for cross-cutting concerns:
+
+```mermaid
+graph TD
+    Client[Client Applications] --> RateLimit[Rate Limiting]
+    RateLimit --> Auth[Authentication]
+    Auth --> Router[Express Router]
+    
+    subgraph "API Layer"
+        Router --> Health[Health Endpoints]
+        Router --> Context[Context Endpoints]
+        Router --> Conversation[Conversation Endpoints]
+        Router --> Exercise[Exercise Endpoints]
+        Router --> MCP[MCP Query Endpoints]
+    end
+    
+    subgraph "Service Layer"
+        Context --> MCPService[MCP Service]
+        Conversation --> MCPService
+        Exercise --> MCPService
+        MCP --> MCPService
+        MCPService --> ContextManager[Context Manager]
+        MCPService --> AnthropicPool[Anthropic Connection Pool]
+    end
+    
+    subgraph "Data & External Services"
+        ContextManager --> Cache[Memory Cache]
+        ContextManager --> DataStore[In-Memory Data Store]
+        AnthropicPool --> Claude[Anthropic Claude API]
+    end
+    
+    subgraph "Cross-Cutting Concerns"
+        Logger[Logging Service]
+        ErrorHandler[Error Handler]
+        Cleanup[Resource Cleanup]
+    end
+    
+    ErrorHandler -.-> Router
+    Logger -.-> All[All Components]
+    Cleanup -.-> DataStore
+    Cleanup -.-> Cache
+    Cleanup -.-> AnthropicPool
+```
+
+Key architectural components:
+
+- **RESTful API:** Provides endpoints for MCP queries, context retrieval, conversations, and exercises
+- **Authentication:** Secure API key-base
+
+This tier structure ensures that users can start with the free tier to explore basic functionality, upgrade to the basic tier for more comprehensive learning features, and access the full suite of advanced capabilities with the premium tier. The system is designed to provide value at every tier while offering clear benefits for upgrading.
+
+### 3. Conversation Functionality
+
+- **Start Conversations:** Initialize conversations on various topics with tier-specific limitations
+- **Continue Conversations:** Add messages to existing conversations with context history
+- **Conversation History:** View and manage past conversations
+- **Delete Conversations:** Remove conversations that are no longer needed
+- **Automated Cleanup:** Periodic cleanup of old conversations to prevent memory leaks
+
+### 4. Exercise Functionality
+
+- **Generate Exercises:** Create customized exercises based on difficulty level and topic
+- **Check Exercise Answers:** Submit answers and receive feedback
+- **Exercise Types:** Various exercise types including vocabulary matching, multiple choice, fill-in-the-blank, etc.
+- **Detailed Feedback:** Premium users receive more detailed feedback on their exercises
+
+### 5. Resource Management
+
+- **Memory Management:** Efficient memory usage with automatic cleanup
+- **Connection Pooling:** Optimized API client pooling for concurrent requests
+- **Caching:** Context and response caching to reduce API calls
+- **Graceful Shutdown:** Proper resource cleanup during server shutdown
+
+### 6. Testing and Quality Assurance
+
+- **Unit Tests:** Comprehensive test coverage for all major functionality
+- **Integration Tests:** End-to-end testing of API endpoints
+- **Error Handling Tests:** Validation of error scenarios
+- **Memory Leak Tests:** Verification of memory cleanup functionality
+- **Tier-Based Access Tests:** Validation of tier-specific limitations
+
+### 7. Documentation
+
+- **JSDoc Comments:** Complete documentation for all endpoints and functions
+- **Type Definitions:** TypeScript type definitions for improved code safety
+- **Code Comments:** Clear comments explaining complex logic
+- **API Documentation:** Detailed endpoint descriptions with parameter and response information
+
+## Technical Implementation
+
+### System Architecture
+
+The server follows a layered architecture with middleware for cross-cutting concerns:
+
+```mermaid
+graph TD
+    Client[Client Applications] --> RateLimit[Rate Limiting]
+    RateLimit --> Auth[Authentication]
+    Auth --> Router[Express Router]
+
+    subgraph "API Layer"
+        Router --> Health[Health Endpoints]
+        Router --> Context[Context Endpoints]
+        Router --> Conversation[Conversation Endpoints]
+        Router --> Exercise[Exercise Endpoints]
+        Router --> MCP[MCP Query Endpoints]
+    end
+
+    subgraph "Service Layer"
+        Context --> MCPService[MCP Service]
+        Conversation --> MCPService
+        Exercise --> MCPService
+        MCP --> MCPService
+        MCPService --> ContextManager[Context Manager]
+        MCPService --> AnthropicPool[Anthropic Connection Pool]
+    end
+
+    subgraph "Data & External Services"
+        ContextManager --> Cache[Memory Cache]
+        ContextManager --> DataStore[In-Memory Data Store]
+        AnthropicPool --> Claude[Anthropic Claude API]
+    end
+
+    subgraph "Cross-Cutting Concerns"
+        Logger[Logging Service]
+        ErrorHandler[Error Handler]
+        Cleanup[Resource Cleanup]
+    end
+
+    ErrorHandler -.-> Router
+    Logger -.-> All[All Components]
+    Cleanup -.-> DataStore
+    Cleanup -.-> Cache
+    Cleanup -.-> AnthropicPool
+```
+
+### MCP Request Flow
+
+The following sequence diagram shows the flow of a typical MCP request through the system:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Auth as Authentication
+    participant Rate as Rate Limiter
+    participant Router
+    participant MCP as MCP Service
+    participant Context as Context Manager
+    participant Cache
+    participant Pool as Connection Pool
+    participant Claude as Anthropic Claude API
+    participant Cleanup as Resource Cleanup
+
+    Client->>Auth: Request with API Key
+    Auth->>Rate: Check Rate Limits
+    Rate->>Router: Route Request
+    Router->>MCP: Process Request
+
+    Note over MCP: Determine Context Type
+
+    MCP->>Context: Request Context
+    Context->>Cache: Check Cache
+
+    alt Cache Hit
+        Cache-->>Context: Return Cached Context
+    else Cache Miss
+        Context->>Context: Generate Context
+        Context->>Cache: Store in Cache
+    end
+
+    Context-->>MCP: Return Context
+
+    MCP->>Pool: Get Available Connection
+    Pool->>Claude: Send Query with Context
+    Claude-->>Pool: Return Response
+    Pool-->>MCP: Return Response
+
+    MCP->>MCP: Format Response
+    MCP-->>Router: Return Formatted Response
+    Router-->>Client: Send Response
+
+    Note over Cleanup: Periodic Cleanup (Async)
+    Cleanup->>Cache: Clean Stale Items
+    Cleanup->>Pool: Return Connections
+```
+
+### Authentication and Authorization Flow
+
+```mermaid
+flowchart TD
+    A[Client Request] --> B{Has API Key?}
+    B -- No --> C[Return 401 Unauthorized]
+    B -- Yes --> D{Validate API Key}
+    D -- Invalid --> E[Return 403 Forbidden]
+    D -- Valid --> F{Check User Tier}
+    F --> G[Add User Info to Request]
+    G --> H{Access Restricted Resource?}
+    H -- No --> I[Process Request]
+    H -- Yes --> J{User Has Required Tier?}
+    J -- No --> K[Return 403 Forbidden]
+    J -- Yes --> I
+    I --> L[Return Response]
+```
+
+The server is built using:
+
+- **Express.js:** Web framework for handling API requests
+- **TypeScript:** Strongly typed language for improved code quality
+- **Anthropic Claude API:** AI model for generating responses
+- **Jest:** Testing framework for validating functionality
+- **Pino:** Structured logging for debugging and monitoring
+
+## Running the Server
+
+```bash
+# Install dependencies
+npm install
+
+# Set environment variables
+export ANTHROPIC_API_KEY=your_api_key
+export PORT=3000
+
+# Start the server
+npm start
+```
+
+## Deployment and Monitoring
+
+### Deployment Options
+
+#### Docker Deployment
+
+The server can be containerized using Docker for consistent deployment across environments:
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+ENV NODE_ENV=production
+
+EXPOSE 3000
+
+CMD ["node", "dist/server.js"]
+```
+
+Build and run the Docker image:
+
+```bash
+docker build -t spanish-learning-mcp-server .
+docker run -p 3000:3000 -e ANTHROPIC_API_KEY=your_api_key spanish-learning-mcp-server
+```
+
+#### Cloud Platform Deployment
+
+The server can be deployed to various cloud platforms:
+
+**AWS Elastic Beanstalk**:
+
+- Upload the application as a ZIP file
+- Configure environment variables in the Elastic Beanstalk console
+- Enable auto-scaling for handling varying loads
+
+**Google Cloud Run**:
+
+- Build and publish the Docker image to Container Registry
+- Deploy to Cloud Run with memory settings optimized for LLM operations (min 1GB recommended)
+- Configure concurrency based on expected traffic patterns
+
+**Azure App Service**:
+
+- Use the Node.js App Service plan
+- Configure environment variables in the Application Settings
+- Set up auto-scaling rules based on CPU/memory usage
+
+#### Serverless Deployment
+
+For lower traffic scenarios, serverless deployment options can be cost-effective:
+
+**AWS Lambda with API Gateway**:
+
+- Package the application using AWS SAM or Serverless Framework
+- Configure timeout settings appropriately (LLM requests may need longer timeouts)
+- Implement connection pooling carefully due to Lambda's execution model
+
+**Google Cloud Functions**:
+
+- Deploy individual endpoints as separate functions
+- Use Pub/Sub for background processing of resource-intensive operations
+- Implement proper cleanup for cold starts/stops
+
+### Monitoring and Logging
+
+#### Logging Strategy
+
+The server implements structured logging using Pino, which should be integrated with your monitoring stack:
+
+```javascript
+// Example of configuring Pino for production
+const logger = pino({
+  level: process.env.LOG_LEVEL || "info",
+  transport:
+    process.env.NODE_ENV === "production"
+      ? undefined
+      : { target: "pino-pretty" },
+  redact: ["req.headers.authorization", "req.headers.x-api-key"],
+  formatters: {
+    level: (label) => {
+      return { level: label };
+    },
+  },
+});
+```
+
+For production environments, consider:
+
+- Shipping logs to a centralized logging system (CloudWatch, Stackdriver, ELK Stack)
+- Implementing log rotation for self-hosted environments
+- Ensuring sensitive data like API keys are properly redacted
+
+#### Metrics Collection
+
+Monitor the following metrics:
+
+1. **Request metrics**:
+
+   - Request rate per endpoint and tier
+   - Response times (p50, p95, p99)
+   - Error rates by endpoint and error type
+
+2. **Resource metrics**:
+
+   - Memory usage (particularly important for large context operations)
+   - CPU utilization
+   - Connection pool utilization
+
+3. **Business metrics**:
+   - Active users by tier
+   - Conversation and exercise creation rates
+   - API key usage patterns
+
+Recommended tools include:
+
+- Prometheus + Grafana for self-hosted monitoring
+- DataDog, New Relic, or Dynatrace for commercial monitoring
+- Cloud-native monitoring services (CloudWatch, Stackdriver) for cloud deployments
+
+#### Health Checks
+
+The server provides a `/health` endpoint that should be used for:
+
+- Load balancer health checks
+- Container orchestration health probes
+- Alerting on service degradation
+
+Consider extending the health check to include:
+
+- Database connectivity (when implemented)
+- Anthropic API availability
+- Resource availability checks
+
+### Performance Optimization
+
+#### Connection Pooling
+
+The server uses connection pooling for Anthropic API calls, which should be tuned based on your traffic patterns:
+
+```javascript
+// Example tuning for high-traffic environments
+const mcpConfig = new McpConfig({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  connectionPoolSize: 25, // Adjust based on expected concurrent requests
+  connectionPoolTimeout: 60000, // Increase for longer-running requests
+  cacheTTL: 1800000, // 30 minutes for production caching
+  enableCaching: true,
+});
+```
+
+#### Caching Strategy
+
+Optimize caching for your workload:
+
+1. **MCP Context Caching**:
+
+   - Increase cache TTL for stable content
+   - Implement cache warming for common queries
+   - Consider distributed caching (Redis) for multi-instance deployments
+
+2. **Response Caching**:
+   - Cache common queries at the API level
+   - Implement ETag support for client-side caching
+   - Use tiered caching strategies (memory → distributed → persistent)
+
+#### Memory Management
+
+The server includes cleanup routines for memory management that should be tuned for your deployment:
+
+```javascript
+// Example of tuning memory cleanup parameters
+export const CONVERSATION_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days retention
+const CLEANUP_INTERVAL_MS = 30 * 60 * 1000; // Run cleanup every 30 minutes
+```
+
+Consider:
+
+- Shorter retention periods for high-volume deployments
+- More frequent cleanup intervals during peak hours
+- Implementing memory limits per user/tier
+- Using separate processes for memory-intensive operations
+
+### Security Recommendations
+
+#### API Key Security
+
+1. **Key Management**:
+
+   - Rotate API keys regularly
+   - Store keys in a secure vault (AWS Secrets Manager, HashiCorp Vault)
+   - Implement key revocation processes
+
+2. **Key Usage Policies**:
+   - Restrict keys by IP address where possible
+   - Implement key-specific rate limits
+   - Log all key usage for audit purposes
+
+#### Network Security
+
+1. **TLS Configuration**:
+
+   - Always use HTTPS in production
+   - Configure secure TLS parameters (TLS 1.2+, strong ciphers)
+   - Implement HSTS headers
+
+2. **API Protection**:
+   - Consider using an API gateway for additional security
+   - Implement IP-based access controls for admin endpoints
+   - Use Web Application Firewall (WAF) rules to protect against common attacks
+
+#### Secure Deployment Practices
+
+1. **Least Privilege**:
+
+   - Run containers/processes as non-root users
+   - Use minimal base images (Alpine, distroless)
+   - Implement proper network segmentation
+
+2. **Security Scanning**:
+
+   - Scan dependencies for vulnerabilities (npm audit, Snyk)
+   - Implement container image scanning
+   - Perform regular penetration testing
+
+3. **Data Protection**:
+   - Encrypt sensitive data at rest
+   - Implement proper data retention policies
+   - Ensure compliant handling of user data
+
+#### Authentication and Authorization
+
+1. **Enhanced Authentication**:
+
+   - Consider implementing OAuth2/OIDC for user authentication
+   - Add multi-factor authentication for administrative access
+   - Implement proper session management
+
+2. **Enhanced Authorization**:
+   - Implement attribute-based access control (ABAC)
+   - Audit access patterns regularly
+   - Enforce principle of least privilege
+
+## API Endpoints
+
+### Public Endpoints
+
+- `GET /health` - Server health check
+
+### Protected Endpoints
+
+- `POST /api/keys` - Create API keys (admin only)
+- `GET /api/context` - Retrieve language context
+- `POST /api/mcp/query` - Query the MCP with context
+- `GET /api/conversation/topics` - Get available conversation topics
+- `POST /api/conversation/start` - Start a new conversation
+- `POST /api/conversation/continue` - Continue an existing conversation
+- `GET /api/conversation/:id` - Get conversation history
+- `GET /api/conversation/history` - Get all user conversations
+- `DELETE /api/conversation/:id` - Delete a conversation
+- `GET /api/exercise/types` - Get available exercise types
+- `POST /api/exercise/generate` - Generate exercises
+- `POST /api/exercise/check` - Check exercise answers
+- `GET /api/exercise/history` - Get exercise history
+
+## Future Enhancements
+
+- Database integration for persistent storage
+- User management and authentication
+- Analytics and usage tracking
+- Additional exercise types and conversation topics
+- Mobile client applications
+
+# 🌟 Spanish Learning MCP (Model Context Protocol)
 
 <div align="center">
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
@@ -17,7 +641,9 @@
 
 ---
 
-## 🧠 What Is MCP, Really?
+## 🧠 From Client to Server: The MCP Evolution
+
+### What is MCP?
 
 Imagine this:
 You're trying to learn Spanish using an AI assistant. One day, you ask it how to say "hello," and it answers just fine. The next day, you ask a grammar question—and it gives you a complex explanation way above your level. It’s like starting a conversation with someone who has no memory of who you are or what you know.
@@ -130,14 +756,15 @@ This project implements MCP for Spanish language learning, allowing Claude AI to
 - npm or yarn
 - An Anthropic API key (for Claude AI)
 - Optional: Appwrite account (for database integration)
+- Optional: Docker for containerized deployment
 
-### Installation
+### Server Installation
 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/spanish-learning-mcp.git
-   cd spanish-learning-mcp
+   git clone https://github.com/yourusername/spanish-learning-mcp-server.git
+   cd spanish-learning-mcp-server
    ```
 
 2. **Install dependencies**
@@ -148,12 +775,20 @@ This project implements MCP for Spanish language learning, allowing Claude AI to
 
 3. **Set up environment variables**
 
-   Create a `.env.local` file in the root directory with the following variables:
+   Create a `.env` file in the root directory with the following variables:
 
    ```
-   # Anthropic API key for Claude
+   # Anthropic API key for Claude (required)
    ANTHROPIC_API_KEY=your_anthropic_api_key
-
+   
+   # Server configuration
+   PORT=3000
+   NODE_ENV=development
+   LOG_LEVEL=info
+   
+   # Admin API key for creating user API keys (use a secure random value)
+   ADMIN_API_KEY=your_secure_admin_key
+   
    # Appwrite configuration (optional if using the demo with hardcoded data)
    NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
    NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_appwrite_project_id
@@ -162,41 +797,88 @@ This project implements MCP for Spanish language learning, allowing Claude AI to
    NEXT_PUBLIC_APPWRITE_GRAMMAR_COLLECTION_ID=your_grammar_collection_id
    ```
 
-4. **Run the demo**
-
-   ```bash
-   npm run demo
-   ```
-
-   This will run the comprehensive demo that shows vocabulary, grammar, and mixed context examples.
-
-5. **Try the interactive terminal interface**
-
-   ```bash
-   npm run interactive
-   ```
-
-   This launches an interactive terminal interface where you can:
-
-   - Type questions about Spanish vocabulary and grammar
-   - Switch between context types with commands (`/vocab`, `/grammar`, `/mixed`)
-   - See responses in real-time with Spanish text highlighted in cyan
-   - Exit the program with `/exit`
-
-   The interactive interface features:
-
-   - Color-coded Spanish text for easy identification
-   - Consistent formatting of vocabulary and phrases
-   - Real-time responses from Claude AI
-   - Command-based context switching
-
-6. **Start the Next.js development server** (optional, for web interface)
+4. **Start the server in development mode**
 
    ```bash
    npm run dev
    ```
 
-   Then open [http://localhost:3000](http://localhost:3000) in your browser.
+   The server will start on http://localhost:3000 with automatic reloading for development.
+   
+5. **Build and start in production mode**
+
+   ```bash
+   npm run build
+   npm start
+   ```
+
+   For production use, always build the project first and run the optimized version.
+
+6. **Run the server with Docker**
+
+   ```bash
+   # Build the Docker image
+   docker build -t spanish-mcp-server .
+   
+   # Run the container
+   docker run -p 3000:3000 -e ANTHROPIC_API_KEY=your_key spanish-mcp-server
+   ```
+
+### Managing API Keys
+
+The server uses API keys for authentication and tier management. To create API keys:
+
+```bash
+# Create a free tier API key
+curl -X POST http://localhost:3000/api/keys \
+  -H "Content-Type: application/json" \
+  -H "x-admin-key: your_admin_key" \
+  -d '{"userId": "user1", "tier": "free", "name": "Test User"}'
+
+# Create a premium tier API key
+curl -X POST http://localhost:3000/api/keys \
+  -H "Content-Type: application/json" \
+  -H "x-admin-key: your_admin_key" \
+  -d '{"userId": "premium1", "tier": "premium", "name": "Premium User"}'
+```
+
+### Testing the Server
+
+Once the server is running, you can test it with various API endpoints:
+
+```bash
+# Check server health
+curl http://localhost:3000/health
+
+# Test a conversation endpoint with your API key
+curl -X GET http://localhost:3000/api/conversation/topics \
+  -H "x-api-key: your_api_key"
+```
+
+### Client Integration
+
+To connect a frontend application to the server:
+
+```javascript
+// Example fetch request
+async function queryMCP(question) {
+  const response = await fetch('http://localhost:3000/api/mcp/query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'your_api_key'
+    },
+    body: JSON.stringify({
+      query: question,
+      contextType: 'vocabulary'
+    })
+  });
+  
+  return await response.json();
+}
+```
+
+See our [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive examples of all endpoints.
 
 ---
 
@@ -918,7 +1600,7 @@ function SpanishTutor() {
 }
 ```
 
-### Integration with Express Backend
+## Integration with Express Backend
 
 ```javascript
 import express from "express";
@@ -966,6 +1648,140 @@ app.listen(3000, () => {
 });
 ```
 
+### Platform-Specific Integrations
+
+#### Next.js Integration
+
+For Next.js applications, you can create an API route that uses the MCP module:
+
+```javascript
+// pages/api/spanish-tutor.js
+import { createSpanishMcp, ContextType } from "../../lib/mcp-module.js";
+
+// Initialize MCP outside of handler to reuse connections
+const mcp = createSpanishMcp(process.env.ANTHROPIC_API_KEY, {
+  connectionPoolSize: 5, // Optimize for serverless
+});
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const { query, contextType = ContextType.VOCABULARY } = req.body;
+
+    if (!query) {
+      return res.status(400).json({ error: "Query is required" });
+    }
+
+    const response = await mcp.queryWithContext(query, { contextType });
+
+    res.status(200).json({ response });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while processing your request" });
+  }
+}
+```
+
+#### NestJS Integration
+
+For NestJS applications, create a service and controller:
+
+```typescript
+// spanish.service.ts
+import { Injectable } from "@nestjs/common";
+import { createSpanishMcp, ContextType } from "../lib/mcp-module.js";
+
+@Injectable()
+export class SpanishService {
+  private mcp;
+
+  constructor() {
+    this.mcp = createSpanishMcp(process.env.ANTHROPIC_API_KEY);
+  }
+
+  async queryWithContext(
+    query: string,
+    contextType: string = ContextType.VOCABULARY
+  ) {
+    return this.mcp.queryWithContext(query, { contextType });
+  }
+}
+
+// spanish.controller.ts
+import { Controller, Post, Body } from "@nestjs/common";
+import { SpanishService } from "./spanish.service";
+
+@Controller("spanish")
+export class SpanishController {
+  constructor(private readonly spanishService: SpanishService) {}
+
+  @Post("query")
+  async query(@Body() body: { query: string; contextType?: string }) {
+    const { query, contextType } = body;
+    const response = await this.spanishService.queryWithContext(
+      query,
+      contextType
+    );
+    return { response };
+  }
+}
+```
+
+#### Firebase Cloud Functions Integration
+
+For serverless Firebase deployments:
+
+```javascript
+// functions/index.js
+const functions = require("firebase-functions");
+const { createSpanishMcp, ContextType } = require("./lib/mcp-module.js");
+
+// Initialize MCP with connection pooling optimized for serverless
+const mcp = createSpanishMcp(process.env.ANTHROPIC_API_KEY, {
+  connectionPoolSize: 1, // Lower for serverless
+  cacheTTL: 3600000, // 1 hour cache for serverless efficiency
+});
+
+exports.spanishTutor = functions.https.onRequest(async (req, res) => {
+  // Set CORS headers
+  res.set("Access-Control-Allow-Origin", "*");
+
+  if (req.method === "OPTIONS") {
+    res.set("Access-Control-Allow-Methods", "POST");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.status(204).send("");
+    return;
+  }
+
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  try {
+    const { query, contextType = ContextType.VOCABULARY } = req.body;
+
+    if (!query) {
+      res.status(400).send({ error: "Query is required" });
+      return;
+    }
+
+    const response = await mcp.queryWithContext(query, { contextType });
+    res.status(200).send({ response });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send({ error: error.message || "Internal Server Error" });
+  }
+});
+```
+
+````
+
 ---
 
 ## 🔬 Advanced Topics
@@ -990,7 +1806,7 @@ private async getVocabularyContext(options: ContextOptions): Promise<string> {
 
   return this.formatVocabularyForContext(result.items, options.includeExamples);
 }
-```
+````
 
 ### Optimizing Context Format
 
@@ -1056,6 +1872,27 @@ async queryWithContextAndHistory(
 
 **Issue**: TypeScript errors
 **Solution**: Run `npm run build` to check for TypeScript errors. Make sure you're using Node.js 16+ and TypeScript 5+.
+
+### Debugging Tests
+
+**Issue**: Tests fail with timeouts
+**Solution**: Some tests may time out if rate limiting is happening. Add `jest.setTimeout(30000)` to increase timeout, or use the `--testTimeout=30000` flag.
+
+**Issue**: Tests fail with auth errors
+**Solution**: Ensure your test environment includes mock API keys or proper auth setup in `.env.test`.
+
+**Issue**: Memory issues during testing
+**Solution**: Run tests with `NODE_OPTIONS="--max-old-space-size=4096" npm test` to allocate more memory.
+
+### Common Error Codes
+
+| Error Code | Description               | Solution                                       |
+| ---------- | ------------------------- | ---------------------------------------------- |
+| `AUTH_001` | Invalid API key           | Check your API key in headers or env variables |
+| `AUTH_002` | Insufficient tier access  | Upgrade to a higher tier or modify your query  |
+| `RATE_001` | Rate limit exceeded       | Wait before trying again or upgrade tier       |
+| `MCP_001`  | Context generation failed | Check your query and context parameters        |
+| `MCP_002`  | Claude API error          | Check logs for detailed error from Anthropic   |
 
 ---
 
